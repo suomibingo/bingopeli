@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kuvatesti 3</title>
+<title>API kuvatesti</title>
 <style>
 body{font-family:sans-serif;padding:1rem;background:#111;color:#fff;}
 .test{margin:1rem 0;padding:1rem;background:#222;border-radius:8px;}
@@ -12,79 +12,66 @@ img{max-width:200px;max-height:150px;display:block;margin:.5rem 0;}
 </style>
 </head>
 <body>
-<h2>Kuvatesti 3 - Puhelin + koti wifi</h2>
-<p>Testaa ENSIN koti-wifillä, sitten 4G/5G omalla netillä!</p>
+<h2>API kuvatesti</h2>
 
 <div class="test">
-  <b>1. Wikimedia Commons API (haetaan JS:llä)</b>
-  <img id="i1"><span id="s1">Haetaan...</span>
+  <b>1. Wikimedia Commons API thumbnail URL</b>
+  <img id="i1"><div id="s1">Haetaan...</div>
 </div>
 
 <div class="test">
-  <b>2. wsrv.nl + wikimedia (ilman thumb)</b>
-  <img id="i2" src="https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/commons/9/9d/Ferrari_SF90_Stradale.jpg&w=400&output=jpg">
-  <span id="s2">Ladataan...</span>
+  <b>2. Open Library covers (kirjat)</b>
+  <img id="i2" src="https://covers.openlibrary.org/b/id/8226197-M.jpg">
+  <div id="s2">Ladataan...</div>
 </div>
 
 <div class="test">
-  <b>3. Imgur</b>
-  <img id="i3" src="https://i.imgur.com/hzRnRNz.jpg">
-  <span id="s3">Ladataan...</span>
+  <b>3. Wikimedia thumbs via different approach</b>
+  <img id="i3"><div id="s3">Haetaan...</div>
 </div>
 
 <div class="test">
-  <b>4. picsum id/10</b>
-  <img id="i4" src="https://picsum.photos/id/10/400/300">
-  <span id="s4">Ladataan...</span>
-</div>
-
-<div class="test">
-  <b>5. flagcdn suora</b>
-  <img id="i5" src="https://flagcdn.com/w320/fi.png">
-  <span id="s5">Ladataan...</span>
-</div>
-
-<div class="test">
-  <b>6. wsrv.nl + flagcdn</b>
-  <img id="i6" src="https://wsrv.nl/?url=flagcdn.com/w320/fi.png&w=300&output=jpg">
-  <span id="s6">Ladataan...</span>
-</div>
-
-<div class="test">
-  <b>7. Wikipedia suora thumb URL</b>
-  <img id="i7" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Ferrari_SF90_Stradale.jpg/400px-Ferrari_SF90_Stradale.jpg">
-  <span id="s7">Ladataan...</span>
-</div>
-
-<div class="test">
-  <b>8. media.wikimedia.org (eri subdomain)</b>
-  <img id="i8" src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Ferrari_SF90_Stradale.jpg">
-  <span id="s8">Ladataan...</span>
+  <b>4. The Movie DB (elokuvat)</b>
+  <img id="i4" src="https://image.tmdb.org/t/p/w500/rBX3K98HaLfA0aSFx8Q3PqZbX2j.jpg">
+  <div id="s4">Ladataan...</div>
 </div>
 
 <script>
-// Test Wikimedia Commons API
+// Test 1: Wikimedia API
 fetch('https://commons.wikimedia.org/w/api.php?action=query&titles=File:Ferrari_SF90_Stradale.jpg&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*')
-  .then(r=>r.json())
-  .then(data=>{
-    const pages=data.query.pages;
-    const page=pages[Object.keys(pages)[0]];
-    const thumburl=page.imageinfo[0].thumburl;
-    document.getElementById('s1').textContent='URL saatu: '+thumburl.substring(0,50)+'...';
+  .then(r=>r.json()).then(data=>{
+    const p=Object.values(data.query.pages)[0];
+    const url=p.imageinfo[0].thumburl;
+    document.getElementById('s1').textContent='URL: '+url.substring(0,80);
     const img=document.getElementById('i1');
-    img.onload=()=>{document.getElementById('s1').className='ok';document.getElementById('s1').textContent='✅ TOIMII! (Wikimedia API)';};
-    img.onerror=()=>{document.getElementById('s1').className='fail';document.getElementById('s1').textContent='❌ API toimii mutta kuva ei lataudu: '+thumburl.substring(0,60);};
-    img.src=thumburl;
-  })
-  .catch(e=>{document.getElementById('s1').className='fail';document.getElementById('s1').textContent='❌ API fetch epäonnistui: '+e;});
+    img.onload=()=>{document.getElementById('s1').className='ok';document.getElementById('s1').textContent='✅ TOIMII! '+url.substring(0,60);};
+    img.onerror=()=>{
+      document.getElementById('s1').className='fail';
+      document.getElementById('s1').textContent='❌ URL saatu mutta ei lataudu: '+url.substring(0,80);
+    };
+    img.src=url;
+  }).catch(e=>{document.getElementById('s1').textContent='❌ Fetch fail: '+e;});
 
-// Rest of images
-for(let i=2;i<=8;i++){
+// Test 3: Wikimedia REST API
+fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Ferrari')
+  .then(r=>r.json()).then(data=>{
+    const url=data.thumbnail&&data.thumbnail.source;
+    document.getElementById('s3').textContent='URL: '+(url||'ei kuvaa');
+    if(url){
+      const img=document.getElementById('i3');
+      img.onload=()=>{document.getElementById('s3').className='ok';document.getElementById('s3').textContent='✅ Wikipedia REST API toimii!';};
+      img.onerror=()=>{document.getElementById('s3').className='fail';document.getElementById('s3').textContent='❌ URL saatu mutta ei lataudu: '+url.substring(0,80);};
+      img.src=url;
+    }
+  }).catch(e=>{document.getElementById('s3').textContent='❌ Fetch fail: '+e;});
+
+// Test 2 and 4
+[2,4].forEach(i=>{
   const img=document.getElementById('i'+i);
   const span=document.getElementById('s'+i);
   img.onload=()=>{span.className='ok';span.textContent='✅ TOIMII';};
   img.onerror=()=>{span.className='fail';span.textContent='❌ EI TOIMI';};
-}
+});
 </script>
 </body>
 </html>
